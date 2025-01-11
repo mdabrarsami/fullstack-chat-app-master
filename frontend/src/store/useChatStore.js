@@ -61,13 +61,13 @@ export const useChatStore = create((set, get) => ({
         messages: [...get().messages, newMessage],
       });
       
-      // Display browser notification
-      if (Notification.permission === 'granted') {
-        new Notification("NewsM", {
-          body: newMessage?.text,
-          icon: '/icon-192x192.png',
-        });
-      }
+      // // Display browser notification
+      // if (Notification.permission === 'granted') {
+      //   new Notification("NewsM", {
+      //     body: newMessage?.text,
+      //     icon: '/icon-192x192.png',
+      //   });
+      // }
     });
 
     set({ isSubscribed: true });
