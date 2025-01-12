@@ -28,6 +28,29 @@ const App = () => {
     checkAuth();
   }, [checkAuth]);
 
+  useEffect(() => {
+    let deferredPrompt;
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('Ready to install PWA');
+    };
+
+    const handleAppInstalled = () => {
+      deferredPrompt = null;
+      console.log('PWA installed');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
   console.log({ authUser });
 
 
@@ -39,6 +62,7 @@ const App = () => {
       </div>
     );
   }
+
 
 
   return (
