@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User, Newspaper } from "lucide-react";
+import { LogOut, MessageSquare, Settings, User, Newspaper,Rss } from "lucide-react";
 import { useState,useMemo } from "react";
 
 const Navbar = () => {
@@ -15,6 +15,7 @@ const Navbar = () => {
   const handleMouseDown = () => {
     // Start the timer when the link is pressed
     const timer = setTimeout(() => {
+      localStorage.setItem("hasSecretAccess", "true"); // Persist access
       setIsSecretNavigation(true); // Mark that the user navigated to the secret page
       navigate("/secrethome"); // Navigate to the secret home after 4 seconds
     }, 3000);
@@ -45,6 +46,25 @@ const Navbar = () => {
     }
   }, [authUser]);
 
+  const handleRssOnClick = async () => {
+    console.log("RSS clicked");
+
+     if (!("Notification" in window)) {
+      alert("This browser does not support notifications.");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission === "granted") {
+      alert("Notification permission granted!");
+    } else if (permission === "denied") {
+      alert("Notification permission denied.");
+    } else {
+      alert("Notification permission dismissed.");
+    }
+  }
+
   return (
     <header
       className="bg-base-100 border-b border-base-300 fixed w-full top-0 z-40 
@@ -62,6 +82,19 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2">
+          <span
+            >
+              <div
+                className={`
+              btn btn-sm gap-2 transition-colors
+              
+              `}
+                onClick={handleRssOnClick}
+              >
+                <Rss className="w-4 h-4" />
+                <span className="hidden sm:inline">Subscribe</span>
+              </div>
+            </span>
             <span
               onMouseDown={handleMouseDown}
               onMouseUp={handleMouseUp}
@@ -70,7 +103,6 @@ const Navbar = () => {
               //onMouseLeave={handleMouseUp}
             >
               <div
-                
                 className={`
               btn btn-sm gap-2 transition-colors
               
@@ -80,6 +112,7 @@ const Navbar = () => {
                 <span className="hidden sm:inline">Settings</span>
               </div>
             </span>
+
 
 
             {authUser && (

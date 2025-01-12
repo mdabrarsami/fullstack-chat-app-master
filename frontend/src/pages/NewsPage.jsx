@@ -1,10 +1,11 @@
 import NewsCard from "../components/NewsCard";
-import { useAuthStore } from "../store/useAuthStore";
-import { useChatStore } from "../store/useChatStore";
 import { useEffect } from "react";
 
 const NewsPage = () => {
 
+  useEffect(() => {
+    localStorage?.removeItem("hasSecretAccess")
+  }, []);
 
   return (
     <div className="h-screen grid lg:grid-cols-1">
