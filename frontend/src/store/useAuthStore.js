@@ -123,20 +123,35 @@ export const useAuthStore = create((set, get) => ({
           console.log('Update event:', args[0]);
           break;
   
-        case 'newMessage':
-          console.log('New message:', args[0]);
-          const newMsg = args[0];
-          if (newMsg.receiverId === authUser._id) {
-            Notification.requestPermission().then((permission) => {
-              if (permission === 'granted') {
-                new Notification('NewsM', {
-                  body: newMsg?.text,
-                  icon: '/icon-192x192.png',
+          case 'newMessage':
+            const newMsg = args[0];
+            if (newMsg.receiverId === authUser._id) {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then((registration) => {
+                  registration.showNotification('NewsM', {
+                    body: newMsg?.text,
+                    icon: '/icon-192x192.png',
+                    badge: '/icon-192x192.png',
+                    vibrate: [200, 100, 200],
+                    tag: 'message',
+                    data: {
+                      url: '/'
+                    },
+                    actions: [
+                      {
+                        action: 'view',
+                        title: 'View Message'
+                      },
+                      {
+                        action: 'close',
+                        title: 'Close'
+                      }
+                    ]
+                  });
                 });
               }
-            });
-          }
-          break;
+            }
+            break;
   
         default:
           console.log(`Unhandled event: ${eventName}`, args);
