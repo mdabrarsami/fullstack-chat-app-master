@@ -1,4 +1,10 @@
 const CACHE_NAME = 'newsm-cache-v1';
+const THEME_CACHE_NAME = 'theme-cache-v1';
+
+let currentTheme = {
+  color: '#570df8', // Default color
+  isDark: false
+};
 
 // Install event - cache essential files
 self.addEventListener('install', (event) => {
@@ -19,11 +25,40 @@ self.addEventListener('install', (event) => {
 // Fetch event - handle offline access
 self.addEventListener('fetch', (event) => {
   console.log('Service Worker fetching...', event.request.url);
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+  if (event.request.url.endsWith('manifest.json')) {
+    event.respondWith(
+      caches.match('theme').then(async themeResponse => {
+        const theme = themeResponse ? 
+          await themeResponse.json() : 
+          currentTheme;
+
+        return fetch(event.request).then(response => 
+          response.json().then(manifest => {
+            manifest.theme_color = theme.color;
+            manifest.background_color = theme.isDark ? '#000000' : '#ffffff';
+            
+            return new Response(JSON.stringify(manifest), {
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+              }
+            });
+          })
+        );
+      })
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then(response => 
+        response || fetch(event.request)
+      )
+    );
+  }
+  // event.respondWith(
+  //   caches.match(event.request).then((response) => {
+  //     return response || fetch(event.request);
+  //   })
+  // );
 });
 
 // Push event - handle notifications
@@ -117,4 +152,27 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'skipWaiting') {
     self.skipWaiting();
   }
+
+  if (event.data && event.data.type === 'UPDATE_THEME') {
+    currentTheme = {
+      color: event.data.theme,
+      isDark: event.data.isDark
+    };
+
+    // Cache the new theme
+    caches.open(THEME_CACHE_NAME).then(cache => {
+      cache.put('theme', new Response(JSON.stringify(currentTheme)));
+    });
+
+    // Notify all clients about the theme change
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'THEME_UPDATED',
+          theme: currentTheme
+        });
+      });
+    });
+  }
+
 });

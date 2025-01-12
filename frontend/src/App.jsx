@@ -20,7 +20,11 @@ import { useMemo } from "react";
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers,subscribeToAllEvents,unsubscribeFromAllEvents } = useAuthStore();
   
-  const { theme } = useThemeStore();
+  const { theme,initTheme } = useThemeStore();
+
+  useEffect(() => {
+    initTheme();
+  }, []);
 
   console.log({ onlineUsers });
 
