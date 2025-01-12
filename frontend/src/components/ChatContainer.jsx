@@ -43,6 +43,18 @@ const ChatContainer = () => {
     );
   }
 
+
+  //  useEffect(() => {
+  //   const viewportMeta = document.createElement('meta');
+  //   viewportMeta.name = 'viewport';
+  //   viewportMeta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+  //   document.head.appendChild(viewportMeta);
+
+  //   return () => {
+  //     document.head.removeChild(viewportMeta);
+  //   };
+  // }, []);
+
   return (
     <div className="flex-1 flex flex-col overflow-auto">
       <ChatHeader />
