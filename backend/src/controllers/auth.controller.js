@@ -108,6 +108,40 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+export const updateSubscription = async (req, res) => {
+  try {
+    const { subscription,userId } = req.body;
+
+    if (!subscription || typeof subscription !== "object") {
+      return res.status(400).json({ message: "Invalid subscription value" });
+    }
+
+    // Assuming `req.user._id` contains the user ID
+    const updated = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        $or: [
+          { subscription: {} }, // Matches empty object
+          { subscription: null }, // Matches null
+        ],
+      },
+      { subscription }, // Update the subscription field
+      { new: true } // Return the updated document
+    );
+
+    if (!updated) {
+      return res.status(404).json({
+        message: "User not found or subscription is not empty",
+      });
+    }
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error in update subscription:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const checkAuth = (req, res) => {
   try {
     res.status(200).json(req.user);
@@ -116,3 +150,4 @@ export const checkAuth = (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+

@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import WebPushSingleton from "../lib/webPushSingleton.js";
 
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
@@ -60,6 +61,29 @@ export const sendMessage = async (req, res) => {
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
+    // Fetch the receiver's subscription object from the database
+    const receiver = await User.findById(receiverId);
+    if (receiver && receiver.subscription) {
+      const subscription = receiver.subscription;
+
+      // Notification payload
+      const payload = JSON.stringify({
+        title: "New Message",
+        body: `${req.user.name || "Someone"} sent you a message: ${text}`,
+        icon: "/path-to-icon.png", // Optional: Replace with your icon path
+      });
+
+      // Send the push notification
+      try {
+        await WebPushSingleton.sendNotification(subscription, payload);
+        console.log("Push notification sent successfully");
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
+    } else {
+      console.warn("Receiver does not have a valid subscription object");
     }
 
     res.status(201).json(newMessage);

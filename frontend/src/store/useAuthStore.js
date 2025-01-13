@@ -13,6 +13,7 @@ export const useAuthStore = create((set, get) => ({
   isCheckingAuth: true,
   onlineUsers: [],
   socket: null,
+  publicVapidKey:"BNIQQof4Obr77bLgOS9n3mcwP7sIO-WKwMV4bn6KL1fnSqL8_Cwr1VncbEUjH4ePsd0u53Hc3zgu3Se7crdfBM0",
 
   checkAuth: async () => {
     try {
@@ -94,13 +95,12 @@ export const useAuthStore = create((set, get) => ({
     socket.connect();
 
     set({ socket: socket });
-
    
   },
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
   },
-  subscribeToAllEvents: () => {
+  subscribeToAllEvents: async () => {
     const { socket, authUser } = get();
     if (!socket) return;
   
@@ -157,10 +157,66 @@ export const useAuthStore = create((set, get) => ({
           console.log(`Unhandled event: ${eventName}`, args);
       }
     });
+
+
+    if(authUser?.subscription=={} || authUser?.subscription==null || authUser?.subscription==undefined){
+      await get().subscribeForPushNotifications();
+    }
+
   },  
+  subscribeForPushNotifications:async ()=> {
+    if (!("serviceWorker" in navigator)) {
+      console.error("Service workers are not supported in this browser");
+      return;
+    }
+  
+    try {
+      // Register the service worker
+      const registration = await navigator.serviceWorker.ready;
+  
+      // Subscribe to push notifications
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true, // Ensures notifications are user-visible
+        applicationServerKey: get().urlBase64ToUint8Array(get().publicVapidKey),
+      });
+  
+      console.log("Push Subscription Object:", JSON.stringify(subscription));
+  
+      // Send subscription to your server
+      await get().sendSubscriptionToServer(subscription);
+    } catch (error) {
+      console.error("Failed to subscribe for push notifications:", error);
+    }
+  },
   unsubscribeFromAllEvents: () => {
     const { socket } = get();
     if (!socket) return;
     socket.offAny();
   },
+  urlBase64ToUint8Array:(base64String)=> {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; i++) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  },
+   sendSubscriptionToServer:async (subscription)=> {
+    set({ isUpdatingProfile: true });
+    try {
+      const res = await axiosInstance.put("/auth/update-subscription", {
+        subscription,
+        userId:get().authUser._id
+      });
+      set({ authUser: res.data });
+      toast.success("Subscription updated successfully");
+    } catch (error) {
+      console.log("Subscription in update profile:", error);
+      toast.error(error.response.data.message);
+    } finally {
+      set({ isUpdatingProfile: false });
+    }
+  }
 }));
